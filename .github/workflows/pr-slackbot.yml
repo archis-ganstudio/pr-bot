@@ -7,6 +7,7 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+      - review_requested
 
 jobs:
   notify:
@@ -23,3 +24,5 @@ jobs:
           author_name: "PR Bot ⚡️"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          ECHO ${{ github.event.requested_reviewer }}
