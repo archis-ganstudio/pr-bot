@@ -23,5 +23,3 @@ jobs:
           author_name: "PR Bot ⚡️"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
-        secrets:
-          SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
