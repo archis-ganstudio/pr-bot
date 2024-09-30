@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: get requested reviewers
         run: |
-          echo ${{ github.event.requested_reviewer.email }}
+          echo ${{ github.event.requested_reviewer }}
       - name: Send Slack Notification
         uses: 8398a7/action-slack@v3
         if: always()
