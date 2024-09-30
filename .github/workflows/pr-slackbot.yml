@@ -22,4 +22,4 @@ jobs:
           text: "A new pull request has been created! :tada:"
           author_name: "PR Bot ⚡️"
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
