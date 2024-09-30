@@ -19,7 +19,7 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo, pullRequest, author
-          text: "A new pull request has been created! :tada:"
+          text: "A new pull request has been created! :tada: <@U07CKPA8C4B>"
           author_name: "PR Bot ⚡️"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
