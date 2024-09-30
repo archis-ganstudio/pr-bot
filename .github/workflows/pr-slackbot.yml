@@ -1,0 +1,25 @@
+name: Slack Notification for PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - name: Send Slack Notification
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          fields: repo, pullRequest, author
+          text: "A new pull request has been created! :tada:"
+          author_name: "PR Bot ⚡️"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
