@@ -17,7 +17,7 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.draft }}
     steps:
       - name: Get PR details
         env:
@@ -61,7 +61,7 @@ jobs:
       - name: Send Slack Notification on PR open
         uses: 8398a7/action-slack@v3
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
         with:
           status: ${{ job.status }}
           fields: repo, pullRequest, author
@@ -70,7 +70,7 @@ jobs:
 
   notify-on-approval:
     runs-on: ubuntu-latest
-    if: github.event.action == 'submitted' && github.event.review.state == 'approved'
+    if: github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved'
     steps:
     - name: Prepare Slack Tags
       id: prepare_message
@@ -97,7 +97,7 @@ jobs:
     - name: Send Slack Notification on PR Approval
       uses: 8398a7/action-slack@v3
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
       with:
         status: ${{ job.status }}
         fields: repo, pullRequest, author
