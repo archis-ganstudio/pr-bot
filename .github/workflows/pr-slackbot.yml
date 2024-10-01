@@ -15,24 +15,36 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     steps:
-      - name: print reviewer details
+      - name: Get PR details
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REVIEWER: ${{ github.event.requested_reviewer.login }}
         run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
           response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/users/$REVIEWER")
-          echo $response
+          "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+          
+          # Extract requested reviewers
+          REVIEWERS=$(echo $response | jq -r '.requested_reviewers[]?.login | @csv' | tr -d '"')
+          echo "Reviewers: $REVIEWERS"
+          echo "REVIEWERS=${REVIEWERS}" >> $GITHUB_ENV
 
+      - name: Print reviewer details
+        run: |
+          IFS=',' read -r -a REVIEWER_ARRAY <<< "$REVIEWERS"
+          for REVIEWER in "${REVIEWER_ARRAY[@]}"; do
+            response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/users/$REVIEWER")
+            email=$(echo $response | jq -r '.email')
+            echo "Reviewer Email for $REVIEWER: $email"
+          done
 
-          echo "Reviewer Email: $email"
       - name: Send Slack Notification
         uses: 8398a7/action-slack@v3
         if: always()
         with:
           status: ${{ job.status }}
           fields: repo, pullRequest, author
-          text: "A new pull request has been created! :tada: <@U07CKPA8C4B>"
+          text: "A new pull request has been created with reviewers: $REVIEWERS! :tada: <@U07CKPA8C4B>"
           author_name: "PR Bot ⚡️"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
