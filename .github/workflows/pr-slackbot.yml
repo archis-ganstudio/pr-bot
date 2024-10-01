@@ -35,6 +35,7 @@ jobs:
             if [ -n "$REVIEWER" ]; then
               response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
               "https://api.github.com/users/$REVIEWER")
+              echo $response
               email=$(echo "$response" | jq -r '.email // "Email not public"')
               echo "Reviewer Email for $REVIEWER: $email"
             fi
