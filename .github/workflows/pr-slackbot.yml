@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     steps:
-      - name: Get reviewer details
+      - name: print reviewer details
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVIEWER: ${{ github.event.requested_reviewer.login }}
