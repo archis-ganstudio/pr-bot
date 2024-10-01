@@ -5,9 +5,14 @@ on:
     types:
       - opened
       - reopened
-      - synchronize
       - ready_for_review
       - review_requested
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  pull-requests: write
+  contents: read
 
 jobs:
   notify:
@@ -21,6 +26,8 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
           response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+
+          echo "API Response: $response"
           
           REVIEWERS=$(echo "$response" | jq -r '.requested_reviewers | map(.login) | join(",")')
           AUTHOR=$(echo "$response" | jq -r '.user.login')
@@ -51,12 +58,48 @@ jobs:
           echo "SLACK_REVIEWER_TAGS=${SLACK_REVIEWER_TAGS}" >> $GITHUB_ENV
           echo "SLACK_AUTHOR_TAG=${SLACK_AUTHOR_TAG}" >> $GITHUB_ENV
 
-      - name: Send Slack Notification
+      - name: Send Slack Notification on PR open
         uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           status: ${{ job.status }}
           fields: repo, pullRequest, author
           text: "A new pull request has been raised by ${{ env.SLACK_AUTHOR_TAG }}! :tada:\nRequested reviewers${{ env.SLACK_REVIEWER_TAGS }}!"
           author_name: "PR Bot ⚡️"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
+
+  notify-on-approval:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'submitted' && github.event.review.state == 'approved'
+    steps:
+    - name: Prepare Slack Tags
+      id: prepare_message
+      run: |
+        SLACK_USERS='${{ vars.SLACK_USER_MAPPING }}'
+        REVIEWER="${{ github.event.review.user.login }}"
+        AUTHOR="${{ github.event.pull_request.user.login }}"
+
+        SLACK_REVIEWER_TAG=""
+        SLACK_ID=$(echo "$SLACK_USERS" | jq -r --arg user "$REVIEWER" '.[$user]')
+        if [[ "$SLACK_ID" != "null" ]]; then
+          SLACK_REVIEWER_TAG="<@$SLACK_ID>"
+        fi
+
+        SLACK_AUTHOR_TAG=""
+        AUTHOR_SLACK_ID=$(echo "$SLACK_USERS" | jq -r --arg user "$AUTHOR" '.[$user]')
+        if [[ "$AUTHOR_SLACK_ID" != "null" ]]; then
+          SLACK_AUTHOR_TAG="<@$AUTHOR_SLACK_ID>"
+        fi
+        
+        echo "SLACK_REVIEWER_TAG=${SLACK_REVIEWER_TAG}" >> $GITHUB_ENV
+        echo "SLACK_AUTHOR_TAG=${SLACK_AUTHOR_TAG}" >> $GITHUB_ENV
+
+    - name: Send Slack Notification on PR Approval
+      uses: 8398a7/action-slack@v3
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      with:
+        status: ${{ job.status }}
+        fields: repo, pullRequest, author
+        text: "${{ env.SLACK_AUTHOR_TAG }}'s pull request has been approved by ${{ env.SLACK_REVIEWER_TAG }}! :white_check_mark:"
+        author_name: "PR Bot ⚡️"
