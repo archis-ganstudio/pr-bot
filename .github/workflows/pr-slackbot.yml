@@ -56,7 +56,7 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo, pullRequest, author
-          text: "A new pull request has been raised by ${{ env.SLACK_AUTHOR_TAG }}.:tada:\n${{ env.SLACK_REVIEWER_TAGS }}!"
+          text: "A new pull request has been raised by ${{ env.SLACK_AUTHOR_TAG }}! :tada:\nRequested reviewers${{ env.SLACK_REVIEWER_TAGS }}!"
           author_name: "PR Bot ⚡️"
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.PR_REVIEW_SLACK_WEBHOOK }}
