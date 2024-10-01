@@ -14,10 +14,19 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
+    get_email:
+    runs-on: ubuntu-latest
     steps:
-      - name: get requested reviewers
+      - name: Get reviewer details
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEWER: ${{ github.event.requested_reviewer.login }}
         run: |
-          echo ${{ github.event.requested_reviewer }}
+          response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/users/$REVIEWER")
+          email=$(echo $response | jq -r .email)
+
+          echo "Reviewer Email: $email"
       - name: Send Slack Notification
         uses: 8398a7/action-slack@v3
         if: always()
