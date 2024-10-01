@@ -21,8 +21,9 @@ jobs:
           REVIEWER: ${{ github.event.requested_reviewer.login }}
         run: |
           response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/users/$REVIEWER")
-          email=$(echo $response | jq -r .email)
+          "https://api.github.com/users/$REVIEWER")
+          echo $response
+
 
           echo "Reviewer Email: $email"
       - name: Send Slack Notification
