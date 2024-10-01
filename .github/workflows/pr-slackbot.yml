@@ -29,6 +29,8 @@ jobs:
           echo "REVIEWERS=${REVIEWERS}" >> $GITHUB_ENV
 
       - name: Print reviewer details
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           IFS=',' read -r -a REVIEWER_ARRAY <<< "$REVIEWERS"
           for REVIEWER in "${REVIEWER_ARRAY[@]}"; do
