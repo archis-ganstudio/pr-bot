@@ -28,20 +28,33 @@ jobs:
           echo "Reviewers: $REVIEWERS"
           echo "REVIEWERS=${REVIEWERS}" >> $GITHUB_ENV
 
-      - name: Print reviewer details
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Load Slack User Mapping
+        id: slack_user_mapping
         run: |
+          echo '{
+            "arch1tek": "U07CKPA8C4B"
+          }' > slack_users.json
+          echo "::set-output name=slack_users::$(cat slack_users.json | jq -c .)"
+
+      - name: Prepare Slack Message
+        id: prepare_message
+        run: |
+          SLACK_USERS=$(echo "${{ steps.slack_user_mapping.outputs.slack_users }}" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(",")')
+          declare -A user_map
+          IFS=',' read -r -a pairs <<< "$SLACK_USERS"
+          for pair in "${pairs[@]}"; do
+            IFS='=' read -r key value <<< "$pair"
+            user_map["$key"]="$value"
+          done
+          
           IFS=',' read -r -a REVIEWER_ARRAY <<< "$REVIEWERS"
+          SLACK_TAGS=""
           for REVIEWER in "${REVIEWER_ARRAY[@]}"; do
-            if [ -n "$REVIEWER" ]; then
-              response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              "https://api.github.com/users/$REVIEWER")
-              echo $response
-              email=$(echo "$response" | jq -r '.email // "Email not public"')
-              echo "Reviewer Email for $REVIEWER: $email"
+            if [[ -n "${user_map[$REVIEWER]}" ]]; then
+              SLACK_TAGS+="<@${user_map[$REVIEWER]}> "
             fi
           done
+          echo "SLACK_TAGS=${SLACK_TAGS}" >> $GITHUB_ENV
 
       - name: Send Slack Notification
         uses: 8398a7/action-slack@v3
@@ -49,7 +62,7 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo, pullRequest, author
-          text: "A new pull request has been created with reviewers: $REVIEWERS! :tada: <@U07CKPA8C4B>"
+          text: "A new pull request has been created with reviewers: $SLACK_TAGS! :tada:"
           author_name: "PR Bot ⚡️"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
