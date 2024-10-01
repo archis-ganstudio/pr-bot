@@ -26,7 +26,7 @@ jobs:
           REVIEWERS=$(echo "$response" | jq -r '.requested_reviewers | map(.login) | join(",")')
           echo "REVIEWERS=${REVIEWERS}" >> $GITHUB_ENV
 
-      - name: Prepare Slack Message
+      - name: Prepare Slack Tags
         id: prepare_message
         run: |
           SLACK_USERS='{"arch1tek": "U07CKPA8C4B"}'
